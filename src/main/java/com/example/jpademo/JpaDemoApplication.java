@@ -1,5 +1,7 @@
 package com.example.jpademo;
 
+
+import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
@@ -13,19 +15,30 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 
 import com.example.jpademo.model.Categoria;
+import com.example.jpademo.model.Perfil;
+import com.example.jpademo.model.Usuario;
 import com.example.jpademo.model.Vacante;
 import com.example.jpademo.repository.CategoriasRepository;
+import com.example.jpademo.repository.PerfilesRepository;
+import com.example.jpademo.repository.UsuariosRepository;
 import com.example.jpademo.repository.VacantesRepository;
 
 @SpringBootApplication
 public class JpaDemoApplication implements CommandLineRunner{
 	
 	@Autowired
-	private CategoriasRepository repoCategorias;
+	private CategoriasRepository repoCategorias;	
 	
 	@Autowired
 	private VacantesRepository repoVacantes;
 	
+	@Autowired
+	private PerfilesRepository repoPerfiles;
+	
+	@Autowired
+	private UsuariosRepository repoUsuarios;	
+	
+		
 	public static void main(String[] args) {
 		SpringApplication.run(JpaDemoApplication.class, args);
 	}	
@@ -47,7 +60,93 @@ public class JpaDemoApplication implements CommandLineRunner{
 		//buscarTodosOrdenadosPorNombre();
 		//buscarTodosPaginacion();
 		//buscarTodosPaginacionOrdenados();
-		buscarVacantes();
+		//buscarVacantes();
+		//guardarVacante();
+		//crearPerfilesAplicacion();
+		//crearUsuarioConDosPerfiles();
+		//buscarUsuario();
+		//buscarVacantesPorEstatus();
+		//buscarVacantesPorDestacadoYEstatus();
+		//buscarVacantesSalario();
+		buscarVacantesVariosEstatus();
+	}
+	private void buscarVacantesVariosEstatus() {
+		String[] estatus = new String[] {"Eliminada", "Creada"};
+		List<Vacante> lista = repoVacantes.findByEstatusIn(estatus);
+		System.out.println("Registros encontrados: " + lista.size());
+		for(Vacante v: lista) {
+			System.out.println(v.getId() + ": " + v.getNombre()+ ": " + v.getEstatus());
+		}
+	}
+	
+	
+	private void buscarVacantesSalario() {
+		List<Vacante> lista = repoVacantes.findBySalarioBetweenOrderBySalarioDesc(7000, 14000);
+		System.out.println("Registros encontrados: " + lista.size());
+		for(Vacante v: lista) {
+			System.out.println(v.getId() + ": " + v.getNombre()+ ": $" + v.getSalario());
+		}
+	}
+	
+	private void buscarVacantesPorDestacadoYEstatus() {
+		List<Vacante> lista = repoVacantes.findByDestacadoAndEstatusOrderByIdDesc(1,"Aprobada");
+		System.out.println("Registros encontrados: " + lista.size());
+		for(Vacante v: lista) {
+			System.out.println(v.getId() + ": " + v.getNombre()+ ": " + v.getEstatus() + v.getDestacado());
+		}
+	}
+	
+	
+	private void buscarVacantesPorEstatus() {
+		List<Vacante> lista = repoVacantes.findByEstatus("Aprobada");
+		System.out.println("Registros encontrados: " + lista.size());
+		for(Vacante v: lista) {
+			System.out.println(v.getId() + ": " + v.getNombre()+ ": " + v.getEstatus());
+		}
+	}
+	
+	public void buscarUsuario() {
+		Optional<Usuario> optional = repoUsuarios.findById(1);
+		if(optional.isPresent()) {
+			Usuario u = optional.get();
+			System.out.println("Usuario: "+ u.getNombre());
+			System.out.println("Perfiles asignados");
+			for(Perfil p : u.getPerfiles()) {
+				System.out.println(p.getPerfil());
+			}
+		}else {
+			System.out.println("Usuario no encontrado");
+		}
+	}
+	
+	/**
+	 * Crear un usuario con dos perfiles ("ADMINISTRADOR", "USUARIO")
+	 */
+	
+	private void crearUsuarioConDosPerfiles() {
+		Usuario user = new Usuario();
+		user.setNombre("Negro negrolo");
+		user.setEmail("negro.gmail.com");
+		user.setFechaRegistro(new Date());
+		user.setUserName("Negrolin");
+		user.setPassword("12345");
+		user.setEstatus(1);
+		
+		Perfil per1 = new Perfil();
+		per1.setId(2);
+		
+		Perfil per2 = new Perfil();
+		per2.setId(3);
+		
+		user.agregar(per1);
+		user.agregar(per2);
+		
+		repoUsuarios.save(user);
+		
+	}
+	
+	private void crearPerfilesAplicacion() {
+		repoPerfiles.saveAll(getPerfilesAplicacion());
 	}
 	
 	private void buscarTodosPaginacionOrdenados() {
@@ -113,9 +212,25 @@ public class JpaDemoApplication implements CommandLineRunner{
 	
 	private void buscarVacantes() {
 		List<Vacante> lista = repoVacantes.findAll();
-		for(Vacante c : lista) {
-			System.out.println(c.getId() + " " + c.getNombre());
+		for(Vacante v : lista) {
+			System.out.println(v.getId() + " " + v.getNombre() + "-> " + v.getCategoria().getNombre());
 		}
+	}
+	
+	private void guardarVacante() {
+		Vacante vacante = new Vacante();
+		vacante.setNombre("Profesor de Matematica");
+		vacante.setDescripcion("Escuela primaria solicita profesor para curso de Matematicas");
+		vacante.setFecha(new Date());
+		vacante.setSalario(8500.0);
+		vacante.setEstatus("Aprobada");
+		vacante.setDestacado(0);
+		vacante.setImagen("escuela.png");
+		vacante.setDetalles("<h1>Los requisitos para profesor de Matematicas </h1>");
+		Categoria cat = new Categoria();
+		cat.setId(15);
+		vacante.setCategoria(cat);
+		repoVacantes.save(vacante);
 	}
 	
 	
@@ -196,8 +311,7 @@ public class JpaDemoApplication implements CommandLineRunner{
 				System.out.println("Categoria no encontrada");
 			}
 		
-	}
-	
+	}	
 	
 	public void buscarPorId() {
 		Optional<Categoria> optional = repoCategorias.findById(5);
@@ -205,10 +319,8 @@ public class JpaDemoApplication implements CommandLineRunner{
 			System.out.println(optional.get());
 		}	else {
 				System.out.println("Categoria no encontrada");
-			}
-		
-	}
-	
+			}		
+	}	
 	
 	private void guardar() {
 		Categoria cat = new Categoria();
@@ -242,5 +354,31 @@ public class JpaDemoApplication implements CommandLineRunner{
 		return lista;
 		
 	}
+	
+	/**
+	 * Metodo que regresa una lista de objetos de tipo Perfil que representa los diferentes
+	 * perfiles o roles que tendremos en nuestra aplicacion de empleos
+	 * @return
+	 */
+	private List<Perfil> getPerfilesAplicacion(){
+		List<Perfil> lista = new LinkedList<Perfil>();
+		Perfil per1 = new Perfil();
+		per1.setPerfil("SUPERVISOR");
+		
+		Perfil per2 = new Perfil();
+		per2.setPerfil("ADMINISTRADOR");
+		
+		Perfil per3 = new Perfil();
+		per3.setPerfil("USUARIO");
+		
+		lista.add(per1);
+		lista.add(per2);
+		lista.add(per3);
+		
+		return lista;
+		
+	}
+	
+	
 
 }

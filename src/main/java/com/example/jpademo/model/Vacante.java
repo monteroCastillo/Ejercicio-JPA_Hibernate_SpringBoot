@@ -1,13 +1,16 @@
 package com.example.jpademo.model;
 
+
+
 import java.util.Date;
 
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.OneToOne;
 import javax.persistence.Table;
-import javax.persistence.Transient;
 
 @Entity
 @Table(name="Vacantes")
@@ -24,7 +27,9 @@ public class Vacante {
 	private String imagen="no-image.png";
 	private String estatus;
 	private String detalles;
-	@Transient
+	//@Transient
+	@OneToOne
+	@JoinColumn(name ="idCategoria")
 	private Categoria categoria;
 	
 	public Integer getId() {
